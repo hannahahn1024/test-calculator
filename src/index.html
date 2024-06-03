@@ -2,19 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Calculator App</title>
     <link rel="stylesheet" href="main.css" />
 </head>
 <body>
     <a href="about.html">About</a>
-    <br><br> 
-    <h1 id="title">hello gods plan</h1>
     <br><br>
-    <input type="text" id="noteTitle" />
-    <input type="text" id="noteContent" />
-    <button id='noteSubmit'>Submit Note</button>
+    <h1 id="title">Hello</h1>
+    <br><br>
+    <h3>Test Name</h3>
+    <input type="text" id="SAT_Test_Name" />
+    <br><br>
+
+    <h3>Reading / Writing</h3>
+    <form id="rw-form" class="w3-container">
+        <fieldset>
+            <legend>Question 1:</legend>
+            <input type="radio" id="rw1-a" name="rw1" value="A">
+            <label for="rw1-a">A</label>
+            <input type="radio" id="rw1-b" name="rw1" value="B">
+            <label for="rw1-b">B</label>
+            <input type="radio" id="rw1-c" name="rw1" value="C">
+            <label for="rw1-c">C</label>
+            <input type="radio" id="rw1-d" name="rw1" value="D">
+            <label for="rw1-d">D</label>
+        </fieldset>
+        <fieldset>
+            <legend>Question 2:</legend>
+            <input type="radio" id="rw2-a" name="rw2" value="A">
+            <label for="rw2-a">A</label>
+            <input type="radio" id="rw2-b" name="rw2" value="B">
+            <label for="rw2-b">B</label>
+            <input type="radio" id="rw2-c" name="rw2" value="C">
+            <label for="rw2-c">C</label>
+            <input type="radio" id="rw2-d" name="rw2" value="D">
+            <label for="rw2-d">D</label>
+        </fieldset>
+    </form>
+
+    <br>
+    <h3>Math</h3>
+    <form id="math-form">
+        <fieldset>
+            <legend>Question 1:</legend>
+            <input type="radio" id="m1-a" name="m1" value="A">
+            <label for="m1-a">A</label>
+            <input type="radio" id="m1-b" name="m1" value="B">
+            <label for="m1-b">B</label>
+            <input type="radio" id="m1-c" name="m1" value="C">
+            <label for="m1-c">C</label>
+            <input type="radio" id="m1-d" name="m1" value="D">
+            <label for="m1-d">D</label>
+            <input type="radio" id="m1-other" name="m1" value="Other">
+            <label for="m1-other">Other</label>
+            <input type="text" id="m1-other-text" name="m1-other-text" />
+        </fieldset>
+        <fieldset>
+            <legend>Question 2:</legend>
+            <input type="radio" id="m2-a" name="m2" value="A">
+            <label for="m2-a">A</label>
+            <input type="radio" id="m2-b" name="m2" value="B">
+            <label for="m2-b">B</label>
+            <input type="radio" id="m2-c" name="m2" value="C">
+            <label for="m2-c">C</label>
+            <input type="radio" id="m2-d" name="m2" value="D">
+            <label for="m2-d">D</label>
+            <input type="radio" id="m2-other" name="m2" value="Other">
+            <label for="m2-other">Other</label>
+            <input type="text" id="m2-other-text" name="m2-other-text" />
+        </fieldset>
+    </form>
+
+    <br><br>
+    <button id="noteSubmit" onclick="checkButton()">Submit Note</button>
     
     <script src="script.js"></script>
 </body>
