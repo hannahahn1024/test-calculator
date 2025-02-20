@@ -14,7 +14,7 @@ function createWindow () {
     ipcMain.handle('create-file', (req, data) => {
       if (!data || !data.title || !data.content) return false;
       
-      const filePath = path.join(__dirname, 'notes', `${data.title}.txt`);
+      const filePath = path.join(__dirname, 'tests', `${data.title}.txt`);
       fs.writeFileSync(filePath, data.content);
 
       return {success: true, filePath};
