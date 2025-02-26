@@ -9,3 +9,59 @@ body {
     background-color: white;
     padding: 1.5rem;
 }
+
+input[type="text"] {
+    margin-left: 5px;
+    padding: 3px;
+    width: 100px;
+}
+
+input[type="text"]:disabled {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+}
+
+/* Add these styles to your existing main.css file */
+
+.test-selection {
+    margin-bottom: 20px;
+}
+
+.test-selection select {
+    padding: 8px;
+    margin-right: 10px;
+    min-width: 200px;
+}
+
+.test-selection button {
+    padding: 8px 12px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.test-selection button:hover {
+    background-color: #45a049;
+}
+
+.test-content {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.test-content pre {
+    white-space: pre-wrap;
+    font-family: monospace;
+    margin: 0;
+}
+
+.test-content h2 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+}
