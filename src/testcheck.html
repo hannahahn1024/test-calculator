@@ -8,10 +8,15 @@
     <link rel="stylesheet" href="main.css" />
 </head>
 <body>
-    <a href="index.html">Home</a>
-    <br><br>
+    <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="testcheck.html">Check Answers</a>
+        <a href="studentprofiles.html">Student Profiles</a>
+        <a href="about.html">About</a>
+    </nav>
+    <br>
     <h1 id="title">Check Student Answers</h1>
-    <br><br>
+    <br>
     
     <div class="test-selection">
         <h3>Select a Test to Check:</h3>
@@ -23,13 +28,14 @@
     
     <div id="testContent" class="test-content">
         <!-- Test content will be shown here -->
+        <p>Select a test file and click "Load Test" to view the content.</p>
     </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize with the title from the preload API
             const title_el = document.getElementById('title');
-            title_el.innerText = api.title;
+            title_el.innerText = "Test Calculator App";
             
             // References to DOM elements
             const testSelector = document.getElementById('testSelector');
@@ -38,8 +44,9 @@
             
             // Load available tests
             try {
-                const testFiles = await api.getTestFiles();
-                console.log("Test files:", testFiles);
+                console.log("Requesting test files from main process...");
+                const testFiles = await window.api.getTestFiles();
+                console.log("Test files received:", testFiles);
                 
                 // Clear existing options except the first one
                 while (testSelector.options.length > 1) {
@@ -47,15 +54,19 @@
                 }
                 
                 // Add each test file as an option
-                testFiles.forEach(file => {
-                    const option = document.createElement('option');
-                    option.value = file;
-                    option.textContent = file;
-                    testSelector.appendChild(option);
-                });
+                if (testFiles && testFiles.length > 0) {
+                    testFiles.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file;
+                        option.textContent = file;
+                        testSelector.appendChild(option);
+                    });
+                } else {
+                    testContent.innerHTML = '<p>No test files found.</p>';
+                }
             } catch (error) {
                 console.error('Error loading test files:', error);
-                alert('Failed to load test files: ' + error.message);
+                testContent.innerHTML = '<p>Failed to load test files: ' + error.message + '</p>';
             }
             
             // Handle loading test content
@@ -68,8 +79,9 @@
                 }
                 
                 try {
-                    const content = await api.getTestContent(selectedTest);
-                    console.log("Loaded content for:", selectedTest);
+                    console.log("Requesting content for test:", selectedTest);
+                    const content = await window.api.getTestContent(selectedTest);
+                    console.log("Content received for test:", selectedTest);
                     
                     // Format and display the test content
                     let htmlContent = '<h2>' + selectedTest + '</h2>';

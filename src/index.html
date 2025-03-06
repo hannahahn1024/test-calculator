@@ -9,14 +9,30 @@
   </head>
 
   <body>
-    <a href="testcheck.html">Check Answers</a>
-    <a href="about.html">About</a>
-    <br /><br />
-    <h1 id="title">Hello</h1>
-    <br /><br />
-    <h3>Test Name</h3>
-    <input type="text" id="SAT_Test_Name" />
-    <br /><br />
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="testcheck.html">Check Answers</a>
+      <a href="studentprofiles.html">Student Profiles</a>
+      <a href="about.html">About</a>
+    </nav>
+    <br />
+    <h1 id="title">Test Calculator</h1>
+    <br />
+    
+    <div class="student-selector">
+      <h3>Student Information</h3>
+      <div class="form-group">
+        <label for="student_select">Select Student:</label>
+        <select id="student_select">
+          <option value="">-- Select a Student --</option>
+        </select>
+        <a href="studentprofiles.html">Create New Student Profile</a>
+      </div>
+      <div class="form-group">
+        <label for="SAT_Test_Name">Test Name:</label>
+        <input type="text" id="SAT_Test_Name" />
+      </div>
+    </div>
 
     <h3>Reading / Writing</h3>
     <form id="rw-form" class="w3-container">

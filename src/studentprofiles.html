@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Calculator App</title>
+    <link rel="stylesheet" href="main.css" />
+    <style>
+        .profile-form {
+            max-width: 600px;
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        .profile-list {
+            max-width: 600px;
+            margin-top: 30px;
+        }
+        
+        .profile-list select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .profile-details {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="testcheck.html">Check Answers</a>
+        <a href="studentprofiles.html">Student Profiles</a>
+        <a href="about.html">About</a>
+    </nav>
+    <br><br>
+    <h1 id="title">Student Profile Page</h1>
+    <br />
+    
+    <div class="profile-form">
+        <h3>Student Information</h3>
+        <div class="form-group">
+            <label for="Student_Name">Student Name:</label>
+            <input type="text" id="Student_Name" />
+        </div>
+        <div class="form-group">
+            <label for="Grade_Level">Grade Level:</label>
+            <select id="Grade_Level">
+                <option value="">Select Grade</option>
+                <option value="9">9th Grade</option>
+                <option value="10">10th Grade</option>
+                <option value="11">11th Grade</option>
+                <option value="12">12th Grade</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="Student_ID">Student ID (optional):</label>
+            <input type="text" id="Student_ID" />
+        </div>
+        <div class="form-group">
+            <label for="Notes">Additional Notes:</label>
+            <textarea id="Notes" rows="3"></textarea>
+        </div>
+        <button id="saveProfileBtn">Save Profile</button>
+    </div>
+    
+    <div class="profile-list">
+        <h3>Existing Student Profiles</h3>
+        <select id="studentSelector">
+            <option value="">-- Select a Student --</option>
+        </select>
+        <div id="profileDetails" class="profile-details">
+            <!-- Profile details will be shown here -->
+        </div>
+    </div>
+    
+    <script src="student-profiles.js"></script>
+</body>
+</html>

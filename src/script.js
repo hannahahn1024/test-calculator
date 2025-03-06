@@ -1,5 +1,35 @@
 const title_el = document.getElementById('title');
-title_el.innerText = api.title;
+title_el.innerText = window.api.title;
+
+// Initialize student selector
+const student_select = document.getElementById('student_select');
+loadStudentProfiles();
+
+// Load student profiles for the dropdown
+async function loadStudentProfiles() {
+    try {
+        console.log("Requesting student profiles from main process...");
+        const profiles = await window.api.getStudentProfiles();
+        console.log("Student profiles received:", profiles);
+        
+        // Clear existing options except the first one
+        while (student_select.options.length > 1) {
+            student_select.remove(1);
+        }
+        
+        // Add each profile as an option
+        if (profiles && profiles.length > 0) {
+            profiles.forEach(profile => {
+                const option = document.createElement('option');
+                option.value = profile.filename;
+                option.textContent = profile.name;
+                student_select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading student profiles:', error);
+    }
+}
 
 function checkButton() {
     // Function to get the value of a selected radio button from a given form
@@ -99,20 +129,58 @@ const note_submit_el = document.getElementById('noteSubmit');
 
 note_submit_el.addEventListener('click', async () => {
     const title = note_title_el.value;
+    const studentId = student_select.value;
     const selectedAnswers = checkButton();
+
+    // Validate inputs
+    if (!title) {
+        alert('Please enter a test name.');
+        return;
+    }
 
     // Format the selected answers into a string
     const rwAnswers = selectedAnswers.rwResults.join("\n");
     const mathAnswers = selectedAnswers.mathResults.join("\n");
-
     const content = `Reading/Writing Results:\n${rwAnswers}\n\nMath Results:\n${mathAnswers}`;
 
-    const res = await api.createNote({
-        title,
-        content
-    });
+    // If a student is selected, save to their profile
+    if (studentId) {
+        try {
+            console.log("Saving test to student profile:", studentId);
+            const res = await window.api.saveStudentTest(studentId, {
+                title,
+                content
+            });
+            
+            if (res.success) {
+                alert(`Test saved successfully for student!`);
+            } else {
+                alert(`Error saving test to student profile: ${res.message}`);
+            }
+        } catch (error) {
+            console.error('Error saving test to student:', error);
+            alert(`Error saving test to student profile: ${error.message}`);
+        }
+    } 
+    
+    // Always save to the tests folder
+    try {
+        console.log("Saving test to tests folder:", title);
+        const res = await window.api.createNote({
+            title,
+            content
+        });
 
-    console.log(res);
-
-    resetForms();
+        if (res.success) {
+            if (!studentId) {
+                alert('Test saved successfully!');
+            }
+            resetForms();
+        } else {
+            alert('Error saving test.');
+        }
+    } catch (error) {
+        console.error('Error saving test:', error);
+        alert(`Error saving test: ${error.message}`);
+    }
 });
