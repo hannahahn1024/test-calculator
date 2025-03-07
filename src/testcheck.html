@@ -6,6 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Calculator App</title>
     <link rel="stylesheet" href="main.css" />
+    <style>
+        .management-buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .delete-button {
+            background-color: #dc3545;
+        }
+        
+        .delete-button:hover {
+            background-color: #c82333;
+        }
+        
+        .refresh-button {
+            background-color: #17a2b8;
+        }
+        
+        .refresh-button:hover {
+            background-color: #138496;
+        }
+    </style>
 </head>
 <body>
     <nav class="nav-links">
@@ -19,11 +42,15 @@
     <br>
     
     <div class="test-selection">
-        <h3>Select a Test to Check:</h3>
+        <h3>Select a Test to Use as Answer Key:</h3>
         <select id="testSelector">
             <option value="">-- Select a Test --</option>
         </select>
         <button id="loadTestBtn">Load Test</button>
+        <button id="refreshTestsBtn" class="refresh-button">Refresh Tests</button>
+        <div class="management-buttons" id="testManagementButtons" style="display: none;">
+            <button id="deleteTestBtn" class="delete-button">Delete Test</button>
+        </div>
     </div>
     
     <div id="testContent" class="test-content">
@@ -31,45 +58,308 @@
         <p>Select a test file and click "Load Test" to view the content.</p>
     </div>
     
+    <div id="studentSection" class="student-selection" style="display: none;">
+        <h3>Compare with Student Test:</h3>
+        <div class="selection-row">
+            <label for="studentSelector">Select Student:</label>
+            <select id="studentSelector">
+                <option value="">-- Select a Student --</option>
+            </select>
+            <button id="refreshStudentsBtn" class="refresh-button">Refresh</button>
+        </div>
+        <div class="selection-row">
+            <label for="studentTestSelector">Select Test:</label>
+            <select id="studentTestSelector">
+                <option value="">-- Select a Test --</option>
+            </select>
+            <button id="compareTestBtn">Compare & Grade</button>
+            <button id="refreshStudentTestsBtn" class="refresh-button">Refresh</button>
+        </div>
+        <div class="management-buttons" id="studentTestManagementButtons" style="display: none;">
+            <button id="cleanupStudentTestsBtn">Cleanup Invalid References</button>
+        </div>
+    </div>
+    
+    <div id="testResults" class="results-container" style="display: none;">
+        <!-- Grading results will be shown here -->
+    </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // Initialize with the title from the preload API
             const title_el = document.getElementById('title');
-            title_el.innerText = "Test Calculator App";
+            title_el.innerText = "Check Student Answers";
             
             // References to DOM elements
             const testSelector = document.getElementById('testSelector');
             const loadTestBtn = document.getElementById('loadTestBtn');
+            const refreshTestsBtn = document.getElementById('refreshTestsBtn');
+            const deleteTestBtn = document.getElementById('deleteTestBtn');
             const testContent = document.getElementById('testContent');
+            const testManagementButtons = document.getElementById('testManagementButtons');
+            
+            const studentSection = document.getElementById('studentSection');
+            const studentSelector = document.getElementById('studentSelector');
+            const refreshStudentsBtn = document.getElementById('refreshStudentsBtn');
+            const studentTestSelector = document.getElementById('studentTestSelector');
+            const refreshStudentTestsBtn = document.getElementById('refreshStudentTestsBtn');
+            const compareTestBtn = document.getElementById('compareTestBtn');
+            const cleanupStudentTestsBtn = document.getElementById('cleanupStudentTestsBtn');
+            const studentTestManagementButtons = document.getElementById('studentTestManagementButtons');
+            
+            const testResults = document.getElementById('testResults');
+            
+            // Global variable to store answer key data
+            let answerKeyData = null;
+            let currentAnswerKeyName = "";
             
             // Load available tests
-            try {
-                console.log("Requesting test files from main process...");
-                const testFiles = await window.api.getTestFiles();
-                console.log("Test files received:", testFiles);
-                
-                // Clear existing options except the first one
-                while (testSelector.options.length > 1) {
-                    testSelector.remove(1);
+            async function loadTests() {
+                try {
+                    console.log("Requesting test files from main process...");
+                    const testFiles = await window.api.getTestFiles();
+                    console.log("Test files received:", testFiles);
+                    
+                    // Remember currently selected test
+                    const currentSelection = testSelector.value;
+                    
+                    // Clear existing options except the first one
+                    while (testSelector.options.length > 1) {
+                        testSelector.remove(1);
+                    }
+                    
+                    // Add each test file as an option
+                    if (testFiles && testFiles.length > 0) {
+                        testFiles.forEach(file => {
+                            const option = document.createElement('option');
+                            option.value = file;
+                            option.textContent = file;
+                            testSelector.appendChild(option);
+                        });
+                        
+                        // Try to restore previous selection
+                        if (currentSelection) {
+                            for (let i = 0; i < testSelector.options.length; i++) {
+                                if (testSelector.options[i].value === currentSelection) {
+                                    testSelector.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        testContent.innerHTML = '<p>No test files found.</p>';
+                    }
+                } catch (error) {
+                    console.error('Error loading test files:', error);
+                    testContent.innerHTML = '<p>Failed to load test files: ' + error.message + '</p>';
                 }
-                
-                // Add each test file as an option
-                if (testFiles && testFiles.length > 0) {
-                    testFiles.forEach(file => {
-                        const option = document.createElement('option');
-                        option.value = file;
-                        option.textContent = file;
-                        testSelector.appendChild(option);
-                    });
-                } else {
-                    testContent.innerHTML = '<p>No test files found.</p>';
-                }
-            } catch (error) {
-                console.error('Error loading test files:', error);
-                testContent.innerHTML = '<p>Failed to load test files: ' + error.message + '</p>';
             }
             
-            // Handle loading test content
+            // Initial load of tests
+            await loadTests();
+            
+            // Load student profiles
+            async function loadStudentProfiles() {
+                try {
+                    console.log("Requesting student profiles from main process...");
+                    const profiles = await window.api.getStudentProfiles();
+                    console.log("Student profiles received:", profiles);
+                    
+                    // Remember currently selected student
+                    const currentSelection = studentSelector.value;
+                    
+                    // Clear existing options except the first one
+                    while (studentSelector.options.length > 1) {
+                        studentSelector.remove(1);
+                    }
+                    
+                    // Add each profile as an option
+                    if (profiles && profiles.length > 0) {
+                        profiles.forEach(profile => {
+                            const option = document.createElement('option');
+                            option.value = profile.filename;
+                            option.textContent = profile.name;
+                            studentSelector.appendChild(option);
+                        });
+                        
+                        // Try to restore previous selection
+                        if (currentSelection) {
+                            for (let i = 0; i < studentSelector.options.length; i++) {
+                                if (studentSelector.options[i].value === currentSelection) {
+                                    studentSelector.selectedIndex = i;
+                                    // If a student was selected before, reload their tests
+                                    if (i > 0) {
+                                        loadStudentTests(currentSelection);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading student profiles:', error);
+                    alert("Error loading student profiles: " + error.message);
+                }
+            }
+            
+            // Initial load of student profiles
+            await loadStudentProfiles();
+            
+            // Load student tests
+            async function loadStudentTests(studentId) {
+                if (!studentId) {
+                    // Clear test options if no student is selected
+                    while (studentTestSelector.options.length > 1) {
+                        studentTestSelector.remove(1);
+                    }
+                    return;
+                }
+                
+                try {
+                    console.log("Fetching student profile:", studentId);
+                    const profile = await window.api.getStudentProfile(studentId);
+                    
+                    // Remember currently selected test
+                    const currentSelection = studentTestSelector.value;
+                    
+                    // Clear existing test options
+                    while (studentTestSelector.options.length > 1) {
+                        studentTestSelector.remove(1);
+                    }
+                    
+                    // Add each test as an option (after verifying it exists)
+                    if (profile.tests && profile.tests.length > 0) {
+                        // Verify each test file exists and store valid ones
+                        const validTests = [];
+                        let invalidTestsFound = false;
+                        
+                        for (const test of profile.tests) {
+                            try {
+                                // Verify test file exists directly using the handler
+                                await window.api.getStudentTestContent(studentId, test.path);
+                                validTests.push(test);
+                            } catch (error) {
+                                console.warn(`Test file ${test.name} not found, reference may be stale`);
+                                invalidTestsFound = true;
+                            }
+                        }
+                        
+                        // Show a button to clean up if invalid tests were found
+                        if (invalidTestsFound) {
+                            studentTestManagementButtons.style.display = 'flex';
+                        } else {
+                            studentTestManagementButtons.style.display = 'none';
+                        }
+                        
+                        // Add valid tests to dropdown
+                        validTests.forEach(test => {
+                            const option = document.createElement('option');
+                            option.value = test.path;
+                            option.textContent = test.name;
+                            studentTestSelector.appendChild(option);
+                        });
+                        
+                        // Try to restore previous selection
+                        if (currentSelection) {
+                            for (let i = 0; i < studentTestSelector.options.length; i++) {
+                                if (studentTestSelector.options[i].value === currentSelection) {
+                                    studentTestSelector.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        console.log("No tests found for this student.");
+                    }
+                } catch (error) {
+                    console.error('Error loading student tests:', error);
+                }
+            }
+            
+            // Refresh button handlers
+            refreshTestsBtn.addEventListener('click', () => {
+                loadTests();
+            });
+            
+            refreshStudentsBtn.addEventListener('click', () => {
+                loadStudentProfiles();
+            });
+            
+            refreshStudentTestsBtn.addEventListener('click', () => {
+                loadStudentTests(studentSelector.value);
+            });
+            
+            // Delete test button
+            deleteTestBtn.addEventListener('click', async () => {
+                const selectedTest = testSelector.value;
+                
+                if (!selectedTest) {
+                    alert("Please select a test to delete.");
+                    return;
+                }
+                
+                if (confirm(`Are you sure you want to delete the test "${selectedTest}"? This cannot be undone.`)) {
+                    try {
+                        const result = await window.api.deleteTestFile(selectedTest);
+                        
+                        if (result.success) {
+                            alert(`Test "${selectedTest}" was deleted successfully.`);
+                            
+                            // Clear the answer key if it was the deleted test
+                            if (currentAnswerKeyName === selectedTest) {
+                                answerKeyData = null;
+                                currentAnswerKeyName = "";
+                                testContent.innerHTML = '<p>Select a test file and click "Load Test" to view the content.</p>';
+                                testManagementButtons.style.display = 'none';
+                            }
+                            
+                            // Refresh the test list
+                            await loadTests();
+                        } else {
+                            alert(`Error deleting test: ${result.message}`);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting test:', error);
+                        alert(`Error deleting test: ${error.message}`);
+                    }
+                }
+            });
+            
+            // Cleanup student test references button
+            cleanupStudentTestsBtn.addEventListener('click', async () => {
+                const studentId = studentSelector.value;
+                
+                if (!studentId) {
+                    alert("Please select a student.");
+                    return;
+                }
+                
+                if (confirm("This will remove references to deleted test files from the student's profile. Continue?")) {
+                    try {
+                        const result = await window.api.cleanupStudentTestReferences(studentId);
+                        
+                        if (result.success) {
+                            alert("Student test references cleaned up successfully.");
+                            
+                            // Refresh the student test list
+                            await loadStudentTests(studentId);
+                        } else {
+                            alert(`Error cleaning up test references: ${result.message}`);
+                        }
+                    } catch (error) {
+                        console.error('Error cleaning up test references:', error);
+                        alert(`Error cleaning up test references: ${error.message}`);
+                    }
+                }
+            });
+            
+            // Handle student selection change
+            studentSelector.addEventListener('change', () => {
+                const studentId = studentSelector.value;
+                loadStudentTests(studentId);
+            });
+            
+            // Handle loading test content (answer key)
             loadTestBtn.addEventListener('click', async () => {
                 const selectedTest = testSelector.value;
                 
@@ -83,16 +373,321 @@
                     const content = await window.api.getTestContent(selectedTest);
                     console.log("Content received for test:", selectedTest);
                     
+                    // Store answer key content for later comparison
+                    answerKeyData = content;
+                    currentAnswerKeyName = selectedTest;
+                    
                     // Format and display the test content
-                    let htmlContent = '<h2>' + selectedTest + '</h2>';
+                    let htmlContent = '<h2>Answer Key: ' + selectedTest + '</h2>';
                     htmlContent += '<pre>' + content + '</pre>';
                     
                     testContent.innerHTML = htmlContent;
+                    
+                    // Show management buttons
+                    testManagementButtons.style.display = 'flex';
+                    
+                    // Show student selection section
+                    studentSection.style.display = 'block';
+                    
+                    // Hide results if previously shown
+                    testResults.style.display = 'none';
                 } catch (error) {
                     console.error('Error loading test content:', error);
                     testContent.innerHTML = '<p>Failed to load test content: ' + error.message + '</p>';
                 }
             });
+            
+            // Handle comparing and grading student test
+            compareTestBtn.addEventListener('click', async () => {
+                const studentId = studentSelector.value;
+                const testPath = studentTestSelector.value;
+                
+                if (!answerKeyData) {
+                    alert("Please load an answer key first.");
+                    return;
+                }
+                
+                if (!studentId || !testPath) {
+                    alert("Please select both a student and a test.");
+                    return;
+                }
+                
+                // Show results container
+                testResults.style.display = 'block';
+                testResults.innerHTML = '<p>Loading and grading test...</p>';
+                
+                try {
+                    // Parse the answer key
+                    const answerKey = parseTestContent(answerKeyData);
+                    
+                    // Get the content of the student's test directly from their profile folder
+                    console.log("Getting student test content from:", studentId, testPath);
+                    const studentTestContent = await window.api.getStudentTestContent(studentId, testPath);
+                    const studentAnswers = parseTestContent(studentTestContent);
+                    
+                    // If the student test has the same name as the answer key, warn the user
+                    const testPathParts = testPath.split('/');
+                    const studentTestName = testPathParts[testPathParts.length - 1];
+                    let warningMessage = '';
+                    
+                    if (studentTestName === currentAnswerKeyName) {
+                        warningMessage = `<div class="error" style="margin-bottom: 15px;">
+                            Warning: The student test file name (${studentTestName}) is the same as the answer key. 
+                            Make sure they are different tests before comparing.
+                        </div>`;
+                    }
+                    
+                    // Grade the test
+                    const gradingResult = gradeTest(answerKey, studentAnswers);
+                    
+                    // Display the results with warning if applicable
+                    testResults.innerHTML = warningMessage + generateResultsHTML(gradingResult);
+                } catch (error) {
+                    console.error('Error grading test:', error);
+                    testResults.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+                }
+            });
+            
+            // Parse the test content into a structured format
+            function parseTestContent(content) {
+                const lines = content.split('\n');
+                const result = {};
+                
+                let currentSection = null;
+                
+                for (const line of lines) {
+                    if (line.includes('Reading/Writing Results:')) {
+                        currentSection = 'rw';
+                        result[currentSection] = {};
+                    } else if (line.includes('Math Results:')) {
+                        currentSection = 'math';
+                        result[currentSection] = {};
+                    } else if (currentSection && line.trim()) {
+                        // Parse question line: "Question X: Answer"
+                        const match = line.match(/Question (\d+): (.+)/);
+                        if (match) {
+                            const questionNum = match[1];
+                            const answer = match[2];
+                            result[currentSection][questionNum] = answer;
+                        }
+                    }
+                }
+                
+                return result;
+            }
+            
+            // Digital SAT Scoring Chart 2024
+            const scoringChart = {
+                rw: {
+                    // Raw Score: [Upper Path Score, Lower Path Score]
+                    54: [800, null], 53: [790, null], 52: [780, null], 51: [770, null], 50: [760, null],
+                    49: [750, null], 48: [740, null], 47: [730, 710], 46: [720, 700], 45: [710, 690],
+                    44: [700, 680], 43: [690, 670], 42: [680, 660], 41: [670, 650], 40: [660, 640],
+                    39: [650, 630], 38: [640, 620], 37: [630, 610], 36: [620, 600], 35: [610, 590],
+                    34: [600, 580], 33: [590, 570], 32: [580, 560], 31: [570, 550], 30: [560, 540],
+                    29: [550, 530], 28: [545, 525], 27: [540, 520], 26: [540, 520], 25: [530, 510],
+                    24: [520, 500], 23: [510, 490], 22: [500, 480], 21: [490, 470], 20: [480, 460],
+                    19: [470, 450], 18: [460, 440], 17: [450, 430], 16: [440, 420], 15: [null, 410],
+                    14: [null, 400], 13: [null, 390], 12: [null, 380], 11: [null, 370], 10: [null, 360],
+                    9: [null, 350], 8: [null, 340], 7: [null, 330], 6: [null, 320], 5: [null, 310],
+                    4: [null, 300], 3: [null, 250], 2: [null, 230], 1: [null, 210], 0: [null, 200]
+                },
+                math: {
+                    // Raw Score: [Upper Path Score, Lower Path Score]
+                    44: [800, null], 43: [790, null], 42: [780, null], 41: [770, null], 40: [760, null],
+                    39: [750, 730], 38: [740, 720], 37: [730, 710], 36: [720, 700], 35: [710, 690],
+                    34: [700, 680], 33: [690, 670], 32: [680, 660], 31: [670, 650], 30: [660, 640],
+                    29: [650, 630], 28: [640, 620], 27: [630, 610], 26: [620, 600], 25: [610, 590],
+                    24: [605, 585], 23: [600, 580], 22: [595, 575], 21: [590, 570], 20: [580, 560],
+                    19: [570, 550], 18: [560, 540], 17: [550, 530], 16: [540, 520], 15: [null, 510],
+                    14: [null, 500], 13: [null, 490], 12: [null, 480], 11: [null, 470], 10: [null, 460],
+                    9: [null, 450], 8: [null, 440], 7: [null, 430], 6: [null, 420], 5: [null, 410],
+                    4: [null, 400], 3: [null, 250], 2: [null, 230], 1: [null, 210], 0: [null, 200]
+                }
+            };
+            
+            // Compare student answers with answer key and calculate score
+            function gradeTest(answerKey, studentAnswers) {
+                if (!answerKey || !studentAnswers) {
+                    return null;
+                }
+                
+                const result = {
+                    rw: { correct: 0, incorrect: 0, total: 54, details: [] },
+                    math: { correct: 0, incorrect: 0, total: 44, details: [] }
+                };
+                
+                // Grade Reading/Writing section
+                for (let i = 1; i <= 54; i++) {
+                    const keyAnswer = answerKey.rw[i];
+                    const studentAnswer = studentAnswers.rw[i];
+                    
+                    if (!keyAnswer || keyAnswer === "No selection") {
+                        // Skip questions that don't have an answer in the key
+                        continue;
+                    }
+                    
+                    const isCorrect = keyAnswer === studentAnswer;
+                    result.rw.details.push({
+                        question: i,
+                        keyAnswer,
+                        studentAnswer,
+                        isCorrect
+                    });
+                    
+                    if (isCorrect) {
+                        result.rw.correct++;
+                    } else {
+                        result.rw.incorrect++;
+                    }
+                }
+                
+                // Grade Math section
+                for (let i = 1; i <= 44; i++) {
+                    const keyAnswer = answerKey.math[i];
+                    const studentAnswer = studentAnswers.math[i];
+                    
+                    if (!keyAnswer || keyAnswer === "No selection") {
+                        // Skip questions that don't have an answer in the key
+                        continue;
+                    }
+                    
+                    const isCorrect = keyAnswer === studentAnswer;
+                    result.math.details.push({
+                        question: i,
+                        keyAnswer,
+                        studentAnswer,
+                        isCorrect
+                    });
+                    
+                    if (isCorrect) {
+                        result.math.correct++;
+                    } else {
+                        result.math.incorrect++;
+                    }
+                }
+                
+                // Calculate scaled scores
+                result.rw.rawScore = result.rw.correct;
+                result.math.rawScore = result.math.correct;
+                
+                // Look up scaled scores in chart
+                result.rw.upperPathScore = scoringChart.rw[result.rw.correct] ? scoringChart.rw[result.rw.correct][0] : null;
+                result.rw.lowerPathScore = scoringChart.rw[result.rw.correct] ? scoringChart.rw[result.rw.correct][1] : null;
+                
+                result.math.upperPathScore = scoringChart.math[result.math.correct] ? scoringChart.math[result.math.correct][0] : null;
+                result.math.lowerPathScore = scoringChart.math[result.math.correct] ? scoringChart.math[result.math.correct][1] : null;
+                
+                // Calculate total score (using upper path if available)
+                result.totalScore = 0;
+                if (result.rw.upperPathScore) {
+                    result.totalScore += result.rw.upperPathScore;
+                } else if (result.rw.lowerPathScore) {
+                    result.totalScore += result.rw.lowerPathScore;
+                }
+                
+                if (result.math.upperPathScore) {
+                    result.totalScore += result.math.upperPathScore;
+                } else if (result.math.lowerPathScore) {
+                    result.totalScore += result.math.lowerPathScore;
+                }
+                
+                return result;
+            }
+            
+            // Generate HTML to display the grading results
+            function generateResultsHTML(gradingResult) {
+                if (!gradingResult) {
+                    return '<p>No results to display.</p>';
+                }
+                
+                let html = `
+                    <div class="grading-summary">
+                        <h3>Test Results Summary</h3>
+                        <div class="score-panel">
+                            <div class="total-score">
+                                <h2>Total Score: ${gradingResult.totalScore}</h2>
+                            </div>
+                            <div class="section-scores">
+                                <div class="section-score">
+                                    <h4>Reading &amp; Writing</h4>
+                                    <p>Raw Score: ${gradingResult.rw.correct}/${gradingResult.rw.details.length} questions answered</p>
+                                    <p>Scaled Score: ${gradingResult.rw.upperPathScore || gradingResult.rw.lowerPathScore || 'N/A'}</p>
+                                </div>
+                                <div class="section-score">
+                                    <h4>Math</h4>
+                                    <p>Raw Score: ${gradingResult.math.correct}/${gradingResult.math.details.length} questions answered</p>
+                                    <p>Scaled Score: ${gradingResult.math.upperPathScore || gradingResult.math.lowerPathScore || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detailed-results">
+                        <h3>Detailed Results</h3>
+                        
+                        <h4>Reading &amp; Writing Section</h4>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Key Answer</th>
+                                    <th>Student Answer</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Add rows for Reading & Writing questions
+                gradingResult.rw.details.forEach(detail => {
+                    html += `
+                        <tr class="${detail.isCorrect ? 'correct-answer' : 'incorrect-answer'}">
+                            <td>${detail.question}</td>
+                            <td>${detail.keyAnswer}</td>
+                            <td>${detail.studentAnswer || 'No answer'}</td>
+                            <td>${detail.isCorrect ? '✓' : '✗'}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                        
+                        <h4>Math Section</h4>
+                        <table class="results-table">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Key Answer</th>
+                                    <th>Student Answer</th>
+                                    <th>Result</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Add rows for Math questions
+                gradingResult.math.details.forEach(detail => {
+                    html += `
+                        <tr class="${detail.isCorrect ? 'correct-answer' : 'incorrect-answer'}">
+                            <td>${detail.question}</td>
+                            <td>${detail.keyAnswer}</td>
+                            <td>${detail.studentAnswer || 'No answer'}</td>
+                            <td>${detail.isCorrect ? '✓' : '✗'}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                return html;
+            }
         });
     </script>
 </body>

@@ -2,19 +2,20 @@ const {contextBridge, ipcRenderer} = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
     title: "Test Calculator App",
+    
+    // Test file operations
     createNote: (data) => ipcRenderer.invoke('create-file', data),
-    
-    // Use IPC to get test files from main process
     getTestFiles: () => ipcRenderer.invoke('get-test-files'),
-    
-    // Use IPC to get test content from main process
     getTestContent: (filename) => ipcRenderer.invoke('get-test-content', filename),
+    deleteTestFile: (filename) => ipcRenderer.invoke('delete-test-file', filename),
     
-    // Student profile functions
+    // Student profile operations
     createStudentProfile: (profile) => ipcRenderer.invoke('create-student-profile', profile),
     getStudentProfiles: () => ipcRenderer.invoke('get-student-profiles'),
     getStudentProfile: (filename) => ipcRenderer.invoke('get-student-profile', filename),
     
-    // Associate test with student
-    saveStudentTest: (studentId, testData) => ipcRenderer.invoke('save-student-test', {studentId, testData})
+    // Student test operations
+    saveStudentTest: (studentId, testData) => ipcRenderer.invoke('save-student-test', {studentId, testData}),
+    getStudentTestContent: (studentId, testPath) => ipcRenderer.invoke('get-student-test-content', {studentId, testPath}),
+    cleanupStudentTestReferences: (studentId, testName) => ipcRenderer.invoke('cleanup-student-test-references', {studentId, testName})
 });

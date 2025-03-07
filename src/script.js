@@ -31,6 +31,19 @@ async function loadStudentProfiles() {
     }
 }
 
+// Add event listener for student selection change
+student_select.addEventListener('change', () => {
+    // Short delay to ensure DOM is ready
+    setTimeout(() => {
+        if (note_title_el) {
+            note_title_el.focus();
+            // Try to move cursor to end of any existing text
+            const len = note_title_el.value.length;
+            note_title_el.setSelectionRange(len, len);
+        }
+    }, 100);
+});
+
 function checkButton() {
     // Function to get the value of a selected radio button from a given form
     function getSelectedValue(form, questionName) {
@@ -128,7 +141,7 @@ const note_title_el = document.getElementById("SAT_Test_Name");
 const note_submit_el = document.getElementById('noteSubmit');
 
 note_submit_el.addEventListener('click', async () => {
-    const title = note_title_el.value;
+    const title = note_title_el.value.trim();
     const studentId = student_select.value;
     const selectedAnswers = checkButton();
 
@@ -143,10 +156,13 @@ note_submit_el.addEventListener('click', async () => {
     const mathAnswers = selectedAnswers.mathResults.join("\n");
     const content = `Reading/Writing Results:\n${rwAnswers}\n\nMath Results:\n${mathAnswers}`;
 
-    // If a student is selected, save to their profile
+    // If a student is selected, save to their profile ONLY
     if (studentId) {
         try {
             console.log("Saving test to student profile:", studentId);
+            console.log("Test title:", title);
+            console.log("Test path will be: students/" + studentId + "/tests/" + title + ".txt");
+            
             const res = await window.api.saveStudentTest(studentId, {
                 title,
                 content
@@ -154,6 +170,8 @@ note_submit_el.addEventListener('click', async () => {
             
             if (res.success) {
                 alert(`Test saved successfully for student!`);
+                resetForms();
+                return; // Exit early to prevent double-saving
             } else {
                 alert(`Error saving test to student profile: ${res.message}`);
             }
@@ -161,26 +179,24 @@ note_submit_el.addEventListener('click', async () => {
             console.error('Error saving test to student:', error);
             alert(`Error saving test to student profile: ${error.message}`);
         }
-    } 
-    
-    // Always save to the tests folder
-    try {
-        console.log("Saving test to tests folder:", title);
-        const res = await window.api.createNote({
-            title,
-            content
-        });
+    } else {
+        // Only save to main tests folder if no student is selected
+        try {
+            console.log("Saving test to tests folder:", title);
+            const res = await window.api.createNote({
+                title,
+                content
+            });
 
-        if (res.success) {
-            if (!studentId) {
+            if (res.success) {
                 alert('Test saved successfully!');
+                resetForms();
+            } else {
+                alert('Error saving test.');
             }
-            resetForms();
-        } else {
-            alert('Error saving test.');
+        } catch (error) {
+            console.error('Error saving test:', error);
+            alert(`Error saving test: ${error.message}`);
         }
-    } catch (error) {
-        console.error('Error saving test:', error);
-        alert(`Error saving test: ${error.message}`);
     }
 });

@@ -14,17 +14,30 @@ function getSlug(name) {
 function setupIpcHandlers() {
     // Handle creating a new test file
     ipcMain.handle('create-file', (event, data) => {
-      if (!data || !data.title || !data.content) return false;
+      if (!data || !data.title || !data.content) return {success: false, message: 'Missing title or content'};
       
       const filePath = path.join(__dirname, 'tests', `${data.title}.txt`);
-      fs.writeFileSync(filePath, data.content);
-
-      return {success: true, filePath};
+      console.log("Creating file at:", filePath);
+      
+      try {
+        // Ensure the tests directory exists
+        const testsDir = path.join(__dirname, 'tests');
+        if (!fs.existsSync(testsDir)) {
+            fs.mkdirSync(testsDir, { recursive: true });
+        }
+        
+        fs.writeFileSync(filePath, data.content);
+        return {success: true, filePath};
+      } catch (error) {
+        console.error("Error creating file:", error);
+        return {success: false, message: error.message};
+      }
     });
 
     // Handle getting list of test files
     ipcMain.handle('get-test-files', async (event) => {
         const testsDir = path.join(__dirname, 'tests');
+        console.log("Getting test files from:", testsDir);
         
         // Make sure the directory exists
         if (!fs.existsSync(testsDir)) {
@@ -35,12 +48,15 @@ function setupIpcHandlers() {
         const files = fs.readdirSync(testsDir);
         
         // Filter for .txt files
-        return files.filter(file => file.endsWith('.txt'));
+        const txtFiles = files.filter(file => file.endsWith('.txt'));
+        console.log("Found test files:", txtFiles);
+        return txtFiles;
     });
 
     // Handle getting content of a specific test file
     ipcMain.handle('get-test-content', async (event, filename) => {
         const filePath = path.join(__dirname, 'tests', filename);
+        console.log("Getting test content from:", filePath);
         
         // Check if file exists
         if (!fs.existsSync(filePath)) {
@@ -51,11 +67,32 @@ function setupIpcHandlers() {
         return fs.readFileSync(filePath, 'utf8');
     });
     
+    // Handle getting content of a student's test file
+    ipcMain.handle('get-student-test-content', async (event, data) => {
+        const { studentId, testPath } = data;
+        
+        // Construct the full path to the student's test file
+        // Example path: students/john-doe/tests/test1.txt
+        const fullPath = path.join(__dirname, 'students', studentId, testPath);
+        
+        console.log("Reading student test from:", fullPath);
+        
+        // Check if file exists
+        if (!fs.existsSync(fullPath)) {
+            throw new Error(`Student test file not found: ${fullPath}`);
+        }
+        
+        // Read and return the file content
+        return fs.readFileSync(fullPath, 'utf8');
+    });
+    
     // Student Profile Handlers
     
     // Handle creating a new student profile
     ipcMain.handle('create-student-profile', async (event, profile) => {
         try {
+            console.log("Creating student profile for:", profile.name);
+            
             // Create students directory if it doesn't exist
             const studentsDir = path.join(__dirname, 'students');
             if (!fs.existsSync(studentsDir)) {
@@ -95,6 +132,7 @@ function setupIpcHandlers() {
     // Handle getting list of student profiles
     ipcMain.handle('get-student-profiles', async (event) => {
         try {
+            console.log("Getting student profiles");
             const studentsDir = path.join(__dirname, 'students');
             
             // Make sure the directory exists
@@ -107,6 +145,8 @@ function setupIpcHandlers() {
             const studentDirs = fs.readdirSync(studentsDir, { withFileTypes: true })
                 .filter(dirent => dirent.isDirectory())
                 .map(dirent => dirent.name);
+                
+            console.log("Found student directories:", studentDirs);
                 
             // Read profile info for each student
             const profiles = [];
@@ -126,6 +166,7 @@ function setupIpcHandlers() {
                 }
             }
             
+            console.log("Returning profiles:", profiles);
             return profiles;
         } catch (error) {
             console.error('Error getting student profiles:', error);
@@ -136,6 +177,7 @@ function setupIpcHandlers() {
     // Handle getting a specific student profile
     ipcMain.handle('get-student-profile', async (event, profileId) => {
         try {
+            console.log("Getting student profile:", profileId);
             const profilePath = path.join(__dirname, 'students', profileId, 'profile.json');
             
             // Check if file exists
@@ -155,6 +197,7 @@ function setupIpcHandlers() {
     ipcMain.handle('save-student-test', async (event, data) => {
         try {
             const { studentId, testData } = data;
+            console.log("Saving student test:", studentId, testData.title);
             
             // Check if student exists
             const studentDir = path.join(__dirname, 'students', studentId);
@@ -168,11 +211,11 @@ function setupIpcHandlers() {
                 fs.mkdirSync(testsDir, { recursive: true });
             }
             
-            // Save test data
+            // Save test data to the student's tests directory
             const testPath = path.join(testsDir, `${testData.title}.txt`);
-            fs.writeFileSync(testPath, testData.content);
+            console.log("Saving student test to:", testPath);
             
-            // Update the student's profile with the test reference
+            // Get the student's profile
             const profilePath = path.join(studentDir, 'profile.json');
             const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
             
@@ -180,6 +223,13 @@ function setupIpcHandlers() {
                 profile.tests = [];
             }
             
+            // Remove any existing tests with this name (to prevent duplicates)
+            profile.tests = profile.tests.filter(test => test.name !== testData.title);
+            
+            // Write the test file
+            fs.writeFileSync(testPath, testData.content);
+            
+            // Add the test reference to the profile
             profile.tests.push({
                 name: testData.title,
                 date: new Date().toISOString(),
@@ -191,14 +241,87 @@ function setupIpcHandlers() {
             
             return { 
                 success: true, 
-                message: 'Test saved successfully' 
+                message: 'Test saved successfully to student profile'
             };
         } catch (error) {
             console.error('Error saving student test:', error);
             return { 
                 success: false, 
-                message: error.message 
+                message: error.message
             };
+        }
+    });
+
+    // Handle deleting a test file
+    ipcMain.handle('delete-test-file', async (event, filename) => {
+        try {
+            console.log("Deleting test file:", filename);
+            const filePath = path.join(__dirname, 'tests', filename);
+            
+            // Check if file exists before trying to delete
+            if (!fs.existsSync(filePath)) {
+                return { success: false, message: `File ${filename} does not exist` };
+            }
+            
+            // Delete the file
+            fs.unlinkSync(filePath);
+            
+            // Return success
+            return { success: true, message: `File ${filename} deleted successfully` };
+        } catch (error) {
+            console.error('Error deleting test file:', error);
+            return { success: false, message: error.message };
+        }
+    });
+
+    // Handle cleaning up student test references
+    ipcMain.handle('cleanup-student-test-references', async (event, data) => {
+        try {
+            const { studentId } = data;
+            console.log("Cleaning up test references for student:", studentId);
+            
+            // Get the student profile
+            const profilePath = path.join(__dirname, 'students', studentId, 'profile.json');
+            
+            // Check if profile exists
+            if (!fs.existsSync(profilePath)) {
+                return { success: false, message: `Student profile ${studentId} does not exist` };
+            }
+            
+            // Read the profile
+            const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+            
+            // Filter out the deleted test
+            if (profile.tests) {
+                const originalCount = profile.tests.length;
+                
+                profile.tests = profile.tests.filter(test => {
+                    // For each test, check if the file still exists
+                    const testPath = path.join(__dirname, 'students', studentId, test.path);
+                    console.log("Checking if test exists:", testPath);
+                    
+                    // Keep only tests where the file exists
+                    const exists = fs.existsSync(testPath);
+                    if (!exists) {
+                        console.log("Test file not found, removing reference:", test.name);
+                    }
+                    return exists;
+                });
+                
+                // Save the updated profile
+                fs.writeFileSync(profilePath, JSON.stringify(profile, null, 2));
+                
+                const removedCount = originalCount - profile.tests.length;
+                return { 
+                    success: true, 
+                    message: `Removed ${removedCount} invalid test references`
+                };
+            }
+            
+            return { success: true, message: 'No test references needed cleanup' };
+        } catch (error) {
+            console.error('Error cleaning up student test references:', error);
+            return { success: false, message: error.message };
         }
     });
 }
@@ -208,7 +331,10 @@ function createWindow () {
         width: 768,
         height: 560,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js')
+            preload: path.join(__dirname, 'preload.js'),
+            nodeIntegration: false,
+            contextIsolation: true,
+            sandbox: false
         }
     });
 

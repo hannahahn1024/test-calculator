@@ -67,6 +67,10 @@ button:hover {
 /* Test selection styles */
 .test-selection {
     margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
 }
 
 .test-selection select {
@@ -100,6 +104,7 @@ button:hover {
     white-space: pre-wrap;
     font-family: monospace;
     margin: 0;
+    overflow-x: auto;
 }
 
 .test-content h2 {
@@ -107,6 +112,7 @@ button:hover {
     color: #333;
     border-bottom: 1px solid #ccc;
     padding-bottom: 5px;
+    margin-bottom: 10px;
 }
 
 /* Student profile styles */
@@ -120,4 +126,223 @@ button:hover {
 
 .student-selector select {
     min-width: 200px;
+}
+
+/* Profile form styles */
+.profile-form {
+    max-width: 600px;
+    margin-bottom: 30px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Profile list styles */
+.profile-list {
+    max-width: 600px;
+    margin-top: 30px;
+}
+
+.profile-list select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+}
+
+.profile-details {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+/* Student selection section */
+.student-selection {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.selection-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.selection-row label {
+    margin-right: 10px;
+    min-width: 120px;
+    font-weight: bold;
+}
+
+.selection-row select {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Grading results styles */
+.results-container {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.grading-summary {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.score-panel {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.total-score {
+    flex: 100%;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.total-score h2 {
+    font-size: 24px;
+    color: #333;
+    margin: 10px 0;
+}
+
+.section-scores {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: space-around;
+}
+
+.section-score {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 0 10px 10px 10px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section-score h4 {
+    margin-top: 0;
+    color: #4CAF50;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.detailed-results {
+    margin-top: 30px;
+}
+
+.detailed-results h3 {
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+}
+
+.detailed-results h4 {
+    margin-top: 20px;
+    background-color: #f2f2f2;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.results-table th, 
+.results-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+.results-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.results-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.correct-answer {
+    background-color: rgba(76, 175, 80, 0.2) !important;
+}
+
+.incorrect-answer {
+    background-color: rgba(217, 83, 79, 0.2) !important;
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.error {
+    color: #d9534f;
+    font-weight: bold;
+    padding: 10px;
+    border: 1px solid #d9534f;
+    border-radius: 5px;
+    background-color: rgba(217, 83, 79, 0.1);
+}
+
+/* Content container */
+.content {
+    padding: 15px;
+    line-height: 1.5;
+}
+
+.content p {
+    margin-bottom: 15px;
+}
+
+.content ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.content ul li {
+    margin-bottom: 5px;
 }
