@@ -13,9 +13,11 @@ contextBridge.exposeInMainWorld('api', {
     createStudentProfile: (profile) => ipcRenderer.invoke('create-student-profile', profile),
     getStudentProfiles: () => ipcRenderer.invoke('get-student-profiles'),
     getStudentProfile: (filename) => ipcRenderer.invoke('get-student-profile', filename),
+    deleteStudentProfile: (profileId) => ipcRenderer.invoke('delete-student-profile', profileId),
     
     // Student test operations
     saveStudentTest: (studentId, testData) => ipcRenderer.invoke('save-student-test', {studentId, testData}),
     getStudentTestContent: (studentId, testPath) => ipcRenderer.invoke('get-student-test-content', {studentId, testPath}),
-    cleanupStudentTestReferences: (studentId, testName) => ipcRenderer.invoke('cleanup-student-test-references', {studentId, testName})
+    cleanupStudentTestReferences: (studentId) => ipcRenderer.invoke('cleanup-student-test-references', {studentId}),
+    deleteStudentTest: (data) => ipcRenderer.invoke('delete-student-test', data)
 });

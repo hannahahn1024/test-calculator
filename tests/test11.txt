@@ -1,7 +1,7 @@
 Reading/Writing Results:
 Question 1: D
 Question 2: No selection
-Question 3: C
+Question 3: No selection
 Question 4: No selection
 Question 5: No selection
 Question 6: No selection
@@ -57,7 +57,7 @@ Question 54: No selection
 Math Results:
 Question 1: No selection
 Question 2: No selection
-Question 3: C
+Question 3: No selection
 Question 4: No selection
 Question 5: No selection
 Question 6: No selection
@@ -97,7 +97,7 @@ Question 39: No selection
 Question 40: No selection
 Question 41: No selection
 Question 42: No selection
-Question 43: A
+Question 43: No selection
 Question 44: No selection
 Question 45: No selection
 Question 46: No selection

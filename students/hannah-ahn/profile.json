@@ -4,11 +4,5 @@
   "studentId": "123456",
   "notes": "very very smart",
   "createdAt": "2025-03-06T02:49:19.713Z",
-  "tests": [
-    {
-      "name": "test1",
-      "date": "2025-03-07T20:38:15.451Z",
-      "path": "tests/test1.txt"
-    }
-  ]
+  "tests": []
 }

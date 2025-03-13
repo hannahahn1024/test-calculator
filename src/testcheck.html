@@ -397,56 +397,69 @@
                 }
             });
             
-            // Handle comparing and grading student test
-            compareTestBtn.addEventListener('click', async () => {
-                const studentId = studentSelector.value;
-                const testPath = studentTestSelector.value;
+            // Helper function to check if two mathematical expressions are equivalent
+            function areMathematicallyEqual(expr1, expr2) {
+                // If expressions are exactly the same, they're equal
+                if (expr1 === expr2) return true;
                 
-                if (!answerKeyData) {
-                    alert("Please load an answer key first.");
-                    return;
-                }
-                
-                if (!studentId || !testPath) {
-                    alert("Please select both a student and a test.");
-                    return;
-                }
-                
-                // Show results container
-                testResults.style.display = 'block';
-                testResults.innerHTML = '<p>Loading and grading test...</p>';
-                
-                try {
-                    // Parse the answer key
-                    const answerKey = parseTestContent(answerKeyData);
+                // Clean and standardize expressions
+                const standardize = (expr) => {
+                    let standardExpr = expr.trim().toLowerCase();
                     
-                    // Get the content of the student's test directly from their profile folder
-                    console.log("Getting student test content from:", studentId, testPath);
-                    const studentTestContent = await window.api.getStudentTestContent(studentId, testPath);
-                    const studentAnswers = parseTestContent(studentTestContent);
-                    
-                    // If the student test has the same name as the answer key, warn the user
-                    const testPathParts = testPath.split('/');
-                    const studentTestName = testPathParts[testPathParts.length - 1];
-                    let warningMessage = '';
-                    
-                    if (studentTestName === currentAnswerKeyName) {
-                        warningMessage = `<div class="error" style="margin-bottom: 15px;">
-                            Warning: The student test file name (${studentTestName}) is the same as the answer key. 
-                            Make sure they are different tests before comparing.
-                        </div>`;
+                    // Remove any "other: " prefix
+                    if (standardExpr.startsWith('other:')) {
+                        standardExpr = standardExpr.substring(6).trim();
                     }
                     
-                    // Grade the test
-                    const gradingResult = gradeTest(answerKey, studentAnswers);
+                    return standardExpr;
+                };
+                
+                expr1 = standardize(expr1);
+                expr2 = standardize(expr2);
+                
+                // Try to convert both expressions to numbers for comparison
+                try {
+                    // Handle fractions like "1/4"
+                    const parseFraction = (expr) => {
+                        if (expr.includes('/')) {
+                            const parts = expr.split('/');
+                            if (parts.length === 2) {
+                                const numerator = parseFloat(parts[0].trim());
+                                const denominator = parseFloat(parts[1].trim());
+                                if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+                                    return numerator / denominator;
+                                }
+                            }
+                        }
+                        return parseFloat(expr);
+                    };
                     
-                    // Display the results with warning if applicable
-                    testResults.innerHTML = warningMessage + generateResultsHTML(gradingResult);
-                } catch (error) {
-                    console.error('Error grading test:', error);
-                    testResults.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+                    const num1 = parseFraction(expr1);
+                    const num2 = parseFraction(expr2);
+                    
+                    // Check if both are valid numbers and equal
+                    if (!isNaN(num1) && !isNaN(num2)) {
+                        // Use a small epsilon for floating-point comparison
+                        const epsilon = 0.0000001;
+                        return Math.abs(num1 - num2) < epsilon;
+                    }
+                } catch (e) {
+                    console.log("Error comparing numbers:", e);
                 }
-            });
+                
+                // Handle special cases like π vs 3.14 or 3.14159
+                if ((expr1 === 'pi' || expr1 === 'π') && 
+                    (expr2.startsWith('3.14') || expr2 === '3.142' || expr2 === '3.1416' || expr2 === '3.14159')) {
+                    return true;
+                }
+                if ((expr2 === 'pi' || expr2 === 'π') && 
+                    (expr1.startsWith('3.14') || expr1 === '3.142' || expr1 === '3.1416' || expr1 === '3.14159')) {
+                    return true;
+                }
+                
+                // If all checks fail, they're not equal
+                return false;
+            }
             
             // Parse the test content into a structured format
             function parseTestContent(content) {
@@ -527,6 +540,7 @@
                         continue;
                     }
                     
+                    // For Reading/Writing, we use exact matching
                     const isCorrect = keyAnswer === studentAnswer;
                     result.rw.details.push({
                         question: i,
@@ -552,7 +566,17 @@
                         continue;
                     }
                     
-                    const isCorrect = keyAnswer === studentAnswer;
+                    // For Math questions, check if the answer is mathematically equivalent when using "Other" option
+                    let isCorrect = false;
+                    
+                    if (keyAnswer.startsWith('Other:') && studentAnswer.startsWith('Other:')) {
+                        // Both are "Other" type answers, so check mathematical equivalence
+                        isCorrect = areMathematicallyEqual(keyAnswer, studentAnswer);
+                    } else {
+                        // Regular option comparison (A, B, C, D)
+                        isCorrect = keyAnswer === studentAnswer;
+                    }
+                    
                     result.math.details.push({
                         question: i,
                         keyAnswer,
@@ -688,6 +712,57 @@
                 
                 return html;
             }
+            
+            // Handle comparing and grading student test
+            compareTestBtn.addEventListener('click', async () => {
+                const studentId = studentSelector.value;
+                const testPath = studentTestSelector.value;
+                
+                if (!answerKeyData) {
+                    alert("Please load an answer key first.");
+                    return;
+                }
+                
+                if (!studentId || !testPath) {
+                    alert("Please select both a student and a test.");
+                    return;
+                }
+                
+                // Show results container
+                testResults.style.display = 'block';
+                testResults.innerHTML = '<p>Loading and grading test...</p>';
+                
+                try {
+                    // Parse the answer key
+                    const answerKey = parseTestContent(answerKeyData);
+                    
+                    // Get the content of the student's test directly from their profile folder
+                    console.log("Getting student test content from:", studentId, testPath);
+                    const studentTestContent = await window.api.getStudentTestContent(studentId, testPath);
+                    const studentAnswers = parseTestContent(studentTestContent);
+                    
+                    // If the student test has the same name as the answer key, warn the user
+                    const testPathParts = testPath.split('/');
+                    const studentTestName = testPathParts[testPathParts.length - 1];
+                    let warningMessage = '';
+                    
+                    if (studentTestName === currentAnswerKeyName) {
+                        warningMessage = `<div class="error" style="margin-bottom: 15px;">
+                            Warning: The student test file name (${studentTestName}) is the same as the answer key. 
+                            Make sure they are different tests before comparing.
+                        </div>`;
+                    }
+                    
+                    // Grade the test
+                    const gradingResult = gradeTest(answerKey, studentAnswers);
+                    
+                    // Display the results with warning if applicable
+                    testResults.innerHTML = warningMessage + generateResultsHTML(gradingResult);
+                } catch (error) {
+                    console.error('Error grading test:', error);
+                    testResults.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+                }
+            });
         });
     </script>
 </body>

@@ -17,9 +17,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Handle saving a new student profile
     saveProfileBtn.addEventListener('click', async () => {
+        // Clear any previous error messages
+        const errorMessageElement = document.getElementById('errorMessage');
+        if (errorMessageElement) {
+            errorMessageElement.remove();
+        }
+        
         // Validate form
         if (!studentNameInput.value.trim()) {
-            alert('Please enter a student name.');
+            displayErrorMessage('Please enter a student name.');
             return;
         }
         
@@ -47,11 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Reload the student profiles
                 loadStudentProfiles();
             } else {
-                alert('Error saving student profile: ' + result.message);
+                // Display error message
+                displayErrorMessage(result.message);
             }
         } catch (error) {
             console.error('Error saving student profile:', error);
-            alert('Failed to save student profile: ' + error.message);
+            displayErrorMessage('Failed to save student profile: ' + error.message);
         }
     });
     
@@ -67,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             console.log("Fetching student profile:", selectedProfile);
             const profile = await window.api.getStudentProfile(selectedProfile);
-            displayProfileDetails(profile);
+            displayProfileDetails(profile, selectedProfile);
         } catch (error) {
             console.error('Error loading student profile:', error);
             profileDetails.innerHTML = '<p>Failed to load student profile: ' + error.message + '</p>';
@@ -102,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    function displayProfileDetails(profile) {
+    function displayProfileDetails(profile, profileId) {
         let html = `
             <h4>${profile.name}</h4>
             <p><strong>Grade Level:</strong> ${profile.gradeLevel ? profile.gradeLevel + 'th Grade' : 'Not specified'}</p>
@@ -114,21 +121,134 @@ document.addEventListener('DOMContentLoaded', async () => {
             html += `<p><strong>Notes:</strong> ${profile.notes}</p>`;
         }
         
+        // Add delete student button
+        html += `
+            <div class="profile-actions">
+                <button id="deleteStudentBtn" class="delete-button">Delete Student</button>
+            </div>
+        `;
+        
         if (profile.tests && profile.tests.length > 0) {
             html += `
                 <h5>Test History</h5>
-                <ul>
+                <table class="tests-table">
+                    <thead>
+                        <tr>
+                            <th>Test Name</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
             
-            profile.tests.forEach(test => {
-                html += `<li>${test.name} (${new Date(test.date).toLocaleDateString()})</li>`;
+            profile.tests.forEach((test, index) => {
+                html += `
+                    <tr>
+                        <td>${test.name}</td>
+                        <td>${new Date(test.date).toLocaleDateString()}</td>
+                        <td>
+                            <button class="delete-test-btn" data-student-id="${profileId}" data-test-index="${index}" data-test-name="${test.name}">Delete</button>
+                        </td>
+                    </tr>
+                `;
             });
             
-            html += `</ul>`;
+            html += `
+                    </tbody>
+                </table>
+            `;
         } else {
             html += `<p>No test history available.</p>`;
         }
         
         profileDetails.innerHTML = html;
+        
+        // Add event listener for delete student button
+        const deleteStudentBtn = document.getElementById('deleteStudentBtn');
+        if (deleteStudentBtn) {
+            deleteStudentBtn.addEventListener('click', () => {
+                deleteStudent(profileId, profile.name);
+            });
+        }
+        
+        // Add event listeners for delete test buttons
+        const deleteTestButtons = document.querySelectorAll('.delete-test-btn');
+        deleteTestButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const studentId = button.getAttribute('data-student-id');
+                const testIndex = parseInt(button.getAttribute('data-test-index'), 10);
+                const testName = button.getAttribute('data-test-name');
+                deleteStudentTest(studentId, testIndex, testName);
+            });
+        });
+    }
+    
+    // Function to delete a student
+    async function deleteStudent(studentId, studentName) {
+        if (confirm(`Are you sure you want to delete student "${studentName}"?\nThis will permanently delete all their test data as well.\nThis action cannot be undone.`)) {
+            try {
+                const result = await window.api.deleteStudentProfile(studentId);
+                
+                if (result.success) {
+                    alert(`Student "${studentName}" deleted successfully.`);
+                    // Clear the profile details
+                    profileDetails.innerHTML = '';
+                    // Reset selector to default
+                    studentSelector.selectedIndex = 0;
+                    // Reload the student profiles
+                    loadStudentProfiles();
+                } else {
+                    alert(`Error deleting student: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Error deleting student:', error);
+                alert(`Failed to delete student: ${error.message}`);
+            }
+        }
+    }
+    
+    // Function to delete a student test
+    async function deleteStudentTest(studentId, testIndex, testName) {
+        if (confirm(`Are you sure you want to delete the test "${testName}" for this student?\nThis action cannot be undone.`)) {
+            try {
+                const result = await window.api.deleteStudentTest({
+                    studentId,
+                    testIndex,
+                    testName
+                });
+                
+                if (result.success) {
+                    alert(`Test "${testName}" deleted successfully.`);
+                    // Refresh the profile details
+                    const profile = await window.api.getStudentProfile(studentId);
+                    displayProfileDetails(profile, studentId);
+                } else {
+                    alert(`Error deleting test: ${result.message}`);
+                }
+            } catch (error) {
+                console.error('Error deleting test:', error);
+                alert(`Failed to delete test: ${error.message}`);
+            }
+        }
+    }
+    
+    // Helper function to display error messages
+    function displayErrorMessage(message) {
+        // Remove any existing error message
+        const oldErrorMessage = document.getElementById('errorMessage');
+        if (oldErrorMessage) {
+            oldErrorMessage.remove();
+        }
+        
+        // Create and insert error message element
+        const errorElement = document.createElement('div');
+        errorElement.id = 'errorMessage';
+        errorElement.className = 'error-message';
+        errorElement.textContent = message;
+        
+        // Insert after the save button
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        saveProfileBtn.insertAdjacentElement('afterend', errorElement);
     }
 });

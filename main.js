@@ -10,6 +10,24 @@ function getSlug(name) {
         .replace(/^-|-$/g, '');
 }
 
+// Helper function for recursive directory deletion
+function deleteFolderRecursive(folderPath) {
+    if (fs.existsSync(folderPath)) {
+        fs.readdirSync(folderPath).forEach((file) => {
+            const curPath = path.join(folderPath, file);
+            if (fs.lstatSync(curPath).isDirectory()) {
+                // Recursive call for directories
+                deleteFolderRecursive(curPath);
+            } else {
+                // Delete file
+                fs.unlinkSync(curPath);
+            }
+        });
+        // Delete the now-empty directory
+        fs.rmdirSync(folderPath);
+    }
+}
+
 // Set up all IPC handlers before the app is ready
 function setupIpcHandlers() {
     // Handle creating a new test file
@@ -93,14 +111,47 @@ function setupIpcHandlers() {
         try {
             console.log("Creating student profile for:", profile.name);
             
+            // Validate student name
+            if (!profile.name || profile.name.trim() === '') {
+                return {
+                    success: false,
+                    message: 'Student name cannot be empty'
+                };
+            }
+            
             // Create students directory if it doesn't exist
             const studentsDir = path.join(__dirname, 'students');
             if (!fs.existsSync(studentsDir)) {
                 fs.mkdirSync(studentsDir, { recursive: true });
             }
             
+            // Check for a duplicate name
+            const slug = getSlug(profile.name);
+            const studentDir = path.join(studentsDir, slug);
+            
+            // If directory exists, check if it's a duplicate profile
+            if (fs.existsSync(studentDir)) {
+                try {
+                    // Try to read the existing profile
+                    const existingProfilePath = path.join(studentDir, 'profile.json');
+                    if (fs.existsSync(existingProfilePath)) {
+                        const existingProfile = JSON.parse(fs.readFileSync(existingProfilePath, 'utf8'));
+                        
+                        // Compare names (case-insensitive)
+                        if (existingProfile.name.toLowerCase() === profile.name.toLowerCase()) {
+                            return {
+                                success: false,
+                                message: `A student with the name "${profile.name}" already exists. Please use a different name.`
+                            };
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error checking for duplicate profile:", err);
+                    // Continue with creation if we can't read the existing profile
+                }
+            }
+            
             // Create directory for this student
-            const studentDir = path.join(studentsDir, getSlug(profile.name));
             if (!fs.existsSync(studentDir)) {
                 fs.mkdirSync(studentDir, { recursive: true });
             }
@@ -118,7 +169,7 @@ function setupIpcHandlers() {
             return { 
                 success: true, 
                 message: 'Profile created successfully',
-                profileId: getSlug(profile.name)
+                profileId: slug
             };
         } catch (error) {
             console.error('Error creating student profile:', error);
@@ -322,6 +373,100 @@ function setupIpcHandlers() {
         } catch (error) {
             console.error('Error cleaning up student test references:', error);
             return { success: false, message: error.message };
+        }
+    });
+
+    // Handle deleting a student profile
+    ipcMain.handle('delete-student-profile', async (event, profileId) => {
+        try {
+            console.log("Deleting student profile:", profileId);
+            
+            // Construct the path to the student's directory
+            const studentDir = path.join(__dirname, 'students', profileId);
+            
+            // Check if directory exists
+            if (!fs.existsSync(studentDir)) {
+                return { success: false, message: `Student profile ${profileId} does not exist` };
+            }
+            
+            // Use recursive deletion to remove the entire student directory
+            // For Node.js 14.14.0 or newer, you can use fs.rmSync
+            // fs.rmSync(studentDir, { recursive: true, force: true });
+            
+            // For older Node.js versions, use the helper function
+            deleteFolderRecursive(studentDir);
+            
+            return { 
+                success: true, 
+                message: `Student profile ${profileId} deleted successfully`
+            };
+        } catch (error) {
+            console.error('Error deleting student profile:', error);
+            return { 
+                success: false, 
+                message: error.message
+            };
+        }
+    });
+
+    // Handle deleting a student's test
+    ipcMain.handle('delete-student-test', async (event, data) => {
+        try {
+            const { studentId, testIndex, testName } = data;
+            console.log("Deleting test for student:", studentId, testName);
+            
+            // Get the student profile
+            const profilePath = path.join(__dirname, 'students', studentId, 'profile.json');
+            
+            // Check if profile exists
+            if (!fs.existsSync(profilePath)) {
+                return { success: false, message: `Student profile ${studentId} does not exist` };
+            }
+            
+            // Read the profile
+            const profile = JSON.parse(fs.readFileSync(profilePath, 'utf8'));
+            
+            // Find the test by index or name
+            if (!profile.tests || profile.tests.length === 0) {
+                return { success: false, message: "No tests found for this student" };
+            }
+            
+            // Get the test to delete
+            let testToDelete;
+            if (typeof testIndex === 'number' && testIndex >= 0 && testIndex < profile.tests.length) {
+                testToDelete = profile.tests[testIndex];
+            } else {
+                testToDelete = profile.tests.find(test => test.name === testName);
+            }
+            
+            if (!testToDelete) {
+                return { success: false, message: `Test ${testName} not found for this student` };
+            }
+            
+            // Get the path to the test file
+            const testPath = path.join(__dirname, 'students', studentId, testToDelete.path);
+            
+            // Delete the test file if it exists
+            if (fs.existsSync(testPath)) {
+                fs.unlinkSync(testPath);
+            }
+            
+            // Remove the test from the profile
+            profile.tests = profile.tests.filter(test => test.name !== testToDelete.name);
+            
+            // Save the updated profile
+            fs.writeFileSync(profilePath, JSON.stringify(profile, null, 2));
+            
+            return { 
+                success: true, 
+                message: `Test ${testToDelete.name} deleted successfully`
+            };
+        } catch (error) {
+            console.error('Error deleting student test:', error);
+            return { 
+                success: false, 
+                message: error.message
+            };
         }
     });
 }

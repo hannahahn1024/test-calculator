@@ -1,22 +1,22 @@
 Reading/Writing Results:
-Question 1: A
-Question 2: A
-Question 3: B
-Question 4: C
-Question 5: A
-Question 6: B
-Question 7: C
+Question 1: D
+Question 2: D
+Question 3: D
+Question 4: D
+Question 5: D
+Question 6: D
+Question 7: D
 Question 8: D
-Question 9: No selection
-Question 10: No selection
-Question 11: No selection
-Question 12: No selection
-Question 13: No selection
-Question 14: No selection
-Question 15: No selection
-Question 16: No selection
-Question 17: No selection
-Question 18: No selection
+Question 9: D
+Question 10: D
+Question 11: D
+Question 12: D
+Question 13: D
+Question 14: D
+Question 15: D
+Question 16: D
+Question 17: D
+Question 18: D
 Question 19: No selection
 Question 20: No selection
 Question 21: No selection
@@ -55,11 +55,11 @@ Question 53: No selection
 Question 54: No selection
 
 Math Results:
-Question 1: No selection
-Question 2: No selection
-Question 3: No selection
-Question 4: No selection
-Question 5: No selection
+Question 1: Other: 1/4
+Question 2: Other: 1/5
+Question 3: Other: .5
+Question 4: Other: .3
+Question 5: Other: 1
 Question 6: No selection
 Question 7: No selection
 Question 8: No selection

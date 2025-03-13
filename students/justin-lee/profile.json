@@ -1,19 +1,8 @@
 {
   "name": "Justin Lee",
-  "gradeLevel": "9",
-  "studentId": "1235465",
-  "notes": "smart",
-  "createdAt": "2025-03-07T20:09:55.144Z",
-  "tests": [
-    {
-      "name": "test5234762",
-      "date": "2025-03-07T20:30:25.152Z",
-      "path": "tests/test5234762.txt"
-    },
-    {
-      "name": "test10-justin",
-      "date": "2025-03-07T20:39:09.676Z",
-      "path": "tests/test10-justin.txt"
-    }
-  ]
+  "gradeLevel": "10",
+  "studentId": "574654",
+  "notes": "",
+  "createdAt": "2025-03-13T02:57:47.424Z",
+  "tests": []
 }

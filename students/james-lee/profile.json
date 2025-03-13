@@ -1,0 +1,14 @@
+{
+  "name": "James Lee",
+  "gradeLevel": "12",
+  "studentId": "1",
+  "notes": "dropped out",
+  "createdAt": "2025-03-07T20:45:59.374Z",
+  "tests": [
+    {
+      "name": "james test 1",
+      "date": "2025-03-07T20:46:44.242Z",
+      "path": "tests/james test 1.txt"
+    }
+  ]
+}

@@ -346,3 +346,35 @@ button:hover {
 .content ul li {
     margin-bottom: 5px;
 }
+
+@media (max-width: 768px) {
+    body {
+        padding: 0.5rem;
+    }
+    
+    .nav-links {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    fieldset {
+        padding: 5px;
+    }
+    
+    .section-scores {
+        flex-direction: column;
+    }
+    
+    .section-score {
+        margin: 5px 0;
+    }
+    
+    .results-table {
+        font-size: 12px;
+    }
+    
+    .results-table th, 
+    .results-table td {
+        padding: 5px;
+    }
+}
